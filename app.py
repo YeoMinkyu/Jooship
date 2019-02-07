@@ -16,7 +16,7 @@ def select_fs():
     # information_rows = ['Revenue USD Mil', 'Operating Income USD Mil', 'Operating Margin %', 'Net Income USD Mil', 'Net Margin %']
     # fs_reformed = reform_fs()
     # information_df = fs_reformed.loc['Revenue USD Mil']
-    information_rows = [2, 4, 5, 6, 7, 8, 9, 12, 14, 32, 43]
+    information_rows = [2, 4, 5, 6, 7, 8, 9, 12, 14, 32, 43, 48]
     information_df = fs.iloc[information_rows]
     new_columns = np.append(np.array(['Year']), fs.iloc[1, 1:].values)
     information_df.columns = new_columns
@@ -84,6 +84,75 @@ def visualize_graph(dash_app):
                 ],
                 'layout':[
                     {'title': 'Margin Data Visualization'}
+                ]
+            }
+        ),
+
+        dcc.Graph(
+            id='cash-flow-graph',
+            figure={
+                'data': [
+                    {'x': chart_columns, 'y': information_df.values[7, 1:], 'type': 'bar',
+                     'name': 'Operating Cash Flow USD'},
+                    {'x': chart_columns, 'y': information_df.values[8, 1:], 'type': 'bar',
+                     'name': 'Free Cash Flow USD'}
+                ],
+                'layout': [
+                    {'title': 'Cash Flow Data Visualization'}
+                ]
+            }
+        ),
+
+        dcc.Graph(
+            id='EPS-graph',
+            figure={
+                'data': [
+                    {'x': chart_columns, 'y': information_df.values[4, 1:], 'type': 'bar',
+                     'name': 'Earning Per Share USD'},
+                ],
+                'layout': [
+                    {'title': 'EPS Data Visualization'}
+                ]
+            }
+        ),
+
+        dcc.Graph(
+            id='YoY-graph',
+            figure={
+                'data': [
+                    {'x': chart_columns, 'y': information_df.values[10, 1:], 'type': 'graph',
+                     'name': 'Revenue YoY %'},
+                    {'x': chart_columns, 'y': information_df.values[11, 1:], 'type': 'graph',
+                     'name': 'Operating Income YoY %'}
+                ],
+                'layout': [
+                    {'title': 'YoY Data Visualization'}
+                ]
+            }
+        ),
+
+        dcc.Graph(
+            id='dividends-graph',
+            figure={
+                'data': [
+                    {'x': chart_columns, 'y': information_df.values[5, 1:], 'type': 'bar',
+                     'name': 'Dividends USD'},
+                ],
+                'layout': [
+                    {'title': 'Dividends Data Visualization'}
+                ]
+            }
+        ),
+
+        dcc.Graph(
+            id='payout-ratio-graph',
+            figure={
+                'data': [
+                    {'x': chart_columns, 'y': information_df.values[6, 1:], 'type': 'graph',
+                     'name': 'Payout Ratio %'},
+                ],
+                'layout': [
+                    {'title': 'Payout Ratio Data Visualization'}
                 ]
             }
         )
