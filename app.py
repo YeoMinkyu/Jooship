@@ -1,21 +1,22 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 import pandas as pd
 import numpy as np
+import copy
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
+file_name = '/Users/mk/Documents/Financial/Financial_Statements/MMM_from_Numbers.csv'
+
 fs = pd.read_csv(
-    '/Users/mk/Documents/Financial/Financial_Statements/SBUX_from_Numbers.csv',
+    file_name,
     error_bad_lines=False
 )
 
 
 def select_fs():
-    # information_rows = ['Revenue USD Mil', 'Operating Income USD Mil', 'Operating Margin %', 'Net Income USD Mil', 'Net Margin %']
-    # fs_reformed = reform_fs()
-    # information_df = fs_reformed.loc['Revenue USD Mil']
     information_rows = [2, 4, 5, 6, 7, 8, 9, 12, 14, 32, 43, 48]
     information_df = fs.iloc[information_rows]
     new_columns = np.append(np.array(['Year']), fs.iloc[1, 1:].values)
@@ -36,20 +37,21 @@ def generate_table(data_frame):
     )
 
 
-def visualize_table(dash_app):
-    information_df = select_fs()
-    dash_app.layout = html.Div(children=[
-        html.H4(children='StarBucks Financial Statements'),
-        generate_table(information_df)
-    ])
+def _make_head_title():
+    _file_name = copy.deepcopy(file_name)
+    _title = _file_name.split('/')[-1]
+    _title = _title.split('_')[0]
+    _title = _title + " Financial Statements"
+    return _title
 
 
 def visualize_graph(dash_app):
     information_df = select_fs()
     chart_columns = information_df.columns.values[1:]
+    _head_title = _make_head_title()
 
     dash_app.layout = html.Div(children=[
-        html.H4(children='StarBucks Financial Statements'),
+        html.H4(children=_head_title),
         generate_table(information_df),
 
         html.H2(children='Visualization'),
@@ -59,34 +61,24 @@ def visualize_graph(dash_app):
         '''),
 
         dcc.Graph(
-            id='r-o-n-graph',
+            id='r-o-n-multiple-axis',
             figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[0, 1:], 'type': 'bar', 'name': 'Revenue USD'},
-                    {'x': chart_columns, 'y': information_df.values[1, 1:], 'type': 'bar', 'name': 'Operating Income'},
-                    {'x': chart_columns, 'y': information_df.values[3, 1:], 'type': 'bar', 'name': 'Net Income'},
+                'data': [go.Bar(x=chart_columns, y= information_df.values[0, 1:], name= 'Revenue USD'),
+                         go.Bar(x=chart_columns, y= information_df.values[1, 1:], name= 'Operating Income'),
+                         go.Bar(x=chart_columns, y=information_df.values[3, 1:], name='Net Income'),
+                         go.Scatter(x=chart_columns, y=information_df.values[2, 1:], name='Operating Margin %', yaxis='y2'),
+                         go.Scatter(x=chart_columns, y=information_df.values[9, 1:], name='Operating Margin %',
+                                    yaxis='y2')
+                         ],
 
-                ],
-                'layout':[
-                    {'title': 'Dash Data Visualization', 'yAxis': {'title': 'USD'}}
-                ]
-             }
-        ),
-
-        dcc.Graph(
-            id='margin-graph',
-            figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[2, 1:], 'type': 'graph',
-                     'name': 'Operating Margin %'},
-                    {'x': chart_columns, 'y': information_df.values[9, 1:], 'type': 'graph',
-                     'name': 'Net Margin %'}
-                ],
-                'layout':[
-                    {'title': 'Margin Data Visualization'}
-                ]
+                'layout': go.Layout(
+                            xaxis={'title': 'Year'},
+                            yaxis={'title': 'USD'},
+                            yaxis2={'title': 'Percent %', 'overlaying': 'y', 'side': 'right'}
+                )
             }
         ),
+
 
         dcc.Graph(
             id='cash-flow-graph',
@@ -104,65 +96,41 @@ def visualize_graph(dash_app):
         ),
 
         dcc.Graph(
-            id='EPS-graph',
+            id='EPS-YoY-graph',
             figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[4, 1:], 'type': 'bar',
-                     'name': 'Earning Per Share USD'},
-                ],
-                'layout': [
-                    {'title': 'EPS Data Visualization'}
-                ]
+                'data': [go.Bar(x=chart_columns, y=information_df.values[4, 1:], name='Earning Per Share USD'),
+                         go.Scatter(x=chart_columns, y=information_df.values[10, 1:], name='Revenue YoY %',
+                                    yaxis='y2'),
+                         go.Scatter(x=chart_columns, y=information_df.values[11, 1:], name='Operating Income YoY %',
+                                    yaxis='y2')
+                         ],
+                'layout': go.Layout(
+                    xaxis={'title': 'Year'},
+                    yaxis={'title': 'EPS USD'},
+                    yaxis2={'title': 'YoY %', 'overlaying': 'y', 'side': 'right'}
+                )
+
             }
         ),
 
         dcc.Graph(
-            id='YoY-graph',
+            id='dividends-payout-ratio-graph',
             figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[10, 1:], 'type': 'graph',
-                     'name': 'Revenue YoY %'},
-                    {'x': chart_columns, 'y': information_df.values[11, 1:], 'type': 'graph',
-                     'name': 'Operating Income YoY %'}
-                ],
-                'layout': [
-                    {'title': 'YoY Data Visualization'}
-                ]
+                'data': [go.Bar(x=chart_columns, y=information_df.values[5, 1:], name='Dividends USD'),
+                         go.Scatter(x=chart_columns, y=information_df.values[6, 1:], name='Payout Ratio %',
+                                    yaxis='y2')
+                         ],
+                'layout': go.Layout(
+                    xaxis={'title': 'Year'},
+                    yaxis={'title': 'Dividends USD'},
+                    yaxis2={'title': 'Payout Ratio %', 'overlaying': 'y', 'side': 'right'}
+                )
             }
         ),
-
-        dcc.Graph(
-            id='dividends-graph',
-            figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[5, 1:], 'type': 'bar',
-                     'name': 'Dividends USD'},
-                ],
-                'layout': [
-                    {'title': 'Dividends Data Visualization'}
-                ]
-            }
-        ),
-
-        dcc.Graph(
-            id='payout-ratio-graph',
-            figure={
-                'data': [
-                    {'x': chart_columns, 'y': information_df.values[6, 1:], 'type': 'graph',
-                     'name': 'Payout Ratio %'},
-                ],
-                'layout': [
-                    {'title': 'Payout Ratio Data Visualization'}
-                ]
-            }
-        )
-
     ])
 
 
 if __name__ == '__main__':
     app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-    # reform_fs()
     visualize_graph(app)
-    # visualize_table(app)
     app.run_server(debug=True)
